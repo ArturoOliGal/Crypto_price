@@ -1,0 +1,9 @@
+matplotlib
+pandas
+numpy
+Pillow
+beautifulsoup4
+request
+json4
+seaborn
+streamlit
