@@ -32,14 +32,19 @@ currency_price_unit=col1.selectbox('select currency for price', ('USD','BTC', 'E
 
 @st.cache_data
 def load_data():
-    cmc = requests.get('https://coinmarketcap.com')
-    soup = BeautifulSoup(cmc.content, 'html.parser')
-
-    data = soup.find('script', id='__NEXT_DATA__', type='application/json')
-    coins = {}
-    coin_data = json.loads(data.contents[0])
-    listings = coin_data
-
+    api_key = '2198d532-23e7-4878-8abb-c183c1f96d68'  
+    url = f"https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
+    headers = {
+        'X-CMC_PRO_API_KEY': api_key,
+        'Accepts': 'application/json'
+    }
+    params = {
+        'start': '1',
+        'limit': '100',
+        'convert': currency_price_unit
+    }
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
 
     coin_name = []
     coin_symbol = []
@@ -50,18 +55,18 @@ def load_data():
     price = []
     volume_24h = []
 
-    for i in listings:
-        coin_name.append(i['Name'])
-        coin_symbol.append(i['symbol'])
-        price.append(i['quote'][currency_price_unit]['price'])
-        percent_change_1h.append(i['quote'][currency_price_unit]['percent_change_1h'])
-        percent_change_24h.append(i['quote'][currency_price_unit]['percent_change_7d'])
-        percent_change_7d.append(i['quote'][currency_price_unit]['percent_change_7d'])
-        market_cap.append(i['quote'][currency_price_unit]['market_cap'])
-        volume_24h.append(i['quote'][currency_price_unit]['volume_24h'])
+    for listing in data['data']:
+        coin_name.append(listing['name'])
+        coin_symbol.append(listing['symbol'])
+        price.append(listing['quote'][currency_price_unit]['price'])
+        percent_change_1h.append(listing['quote'][currency_price_unit]['percent_change_1h'])
+        percent_change_24h.append(listing['quote'][currency_price_unit]['percent_change_24h'])
+        percent_change_7d.append(listing['quote'][currency_price_unit]['percent_change_7d'])
+        market_cap.append(listing['quote'][currency_price_unit]['market_cap'])
+        volume_24h.append(listing['quote'][currency_price_unit]['volume_24h'])
 
     df = pd.DataFrame(columns=['coin_name', 'coin_symbol', 'market_cap', 'percent_change_1h', 'percent_change_24h',
-                            'percent_change_7d', 'price', 'volume_24h'])
+                               'percent_change_7d', 'price', 'volume_24h'])
     df['coin_name'] = coin_name
     df['coin_symbol'] = coin_symbol
     df['price'] = price
@@ -70,7 +75,9 @@ def load_data():
     df['percent_change_7d'] = percent_change_7d
     df['market_cap'] = market_cap
     df['volume_24h'] = volume_24h
+
     return df
+
 
 
 df = load_data()
@@ -78,4 +85,16 @@ df = load_data()
 sorted_coin=sorted(df['coin_symbol'])
 selected_coin=col1.multiselect('Cryptocurrency', sorted_coin, sorted_coin)
 
+
+df_selected = df[df['coin_symbol'].isin(selected_coin)]
+
+
+fig, ax = plt.subplots()
+ax.scatter(df_selected['price'], df_selected['volume_24h'], color='blue')
+
+ax.set_xlabel('Precio')
+ax.set_ylabel('Volumen (24h)')
+ax.set_title('Precio vs Volumen de las Criptomonedas Seleccionadas')
+
+st.pyplot(fig)
 
