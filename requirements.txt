@@ -4,6 +4,5 @@ numpy
 Pillow
 beautifulsoup4
 requests
-json4
 seaborn
 streamlit
