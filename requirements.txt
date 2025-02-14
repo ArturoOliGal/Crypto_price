@@ -3,7 +3,7 @@ pandas
 numpy
 Pillow
 beautifulsoup4
-request
+requests
 json4
 seaborn
 streamlit
